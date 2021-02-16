@@ -16,6 +16,8 @@ from metalearner import MetaLearner
 from dataloader import prepare_data
 from utils import *
 
+import learn2learn as l2l
+
 
 FLAGS = argparse.ArgumentParser()
 FLAGS.add_argument('--mode', choices=['train', 'test'])
@@ -151,7 +153,16 @@ def main():
     logger = GOATLogger(args)
 
     # Get data
-    train_loader, val_loader, test_loader = prepare_data(args)
+    # train_loader, val_loader, test_loader = prepare_data(args)
+
+    # Load train/validation/test tasksets using the benchmark interface
+    tasksets = l2l.vision.benchmarks.get_tasksets('mini-imagenet',
+                                                  train_ways=args.n_class,
+                                                  train_samples=2*args.n_shot,
+                                                  test_ways=args.n_class,
+                                                  test_samples=2*args.n_shot,
+                                                  root='~/data',
+    )
     
     # Set up learner, meta-learner
     learner_w_grad = Learner(args.image_size, args.bn_eps, args.bn_momentum, args.n_class).to(args.dev)
