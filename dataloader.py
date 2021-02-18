@@ -112,10 +112,10 @@ def prepare_data(args):
     train_loader = data.DataLoader(train_set, num_workers=args.n_workers, pin_memory=args.pin_mem,
         batch_sampler=EpisodicSampler(len(train_set), args.n_class, args.episode))
 
-    val_loader = data.DataLoader(val_set, num_workers=2, pin_memory=False,
+    val_loader = data.DataLoader(val_set, num_workers=args.n_workers, pin_memory=False,
         batch_sampler=EpisodicSampler(len(val_set), args.n_class, args.episode_val))
 
-    test_loader = data.DataLoader(test_set, num_workers=2, pin_memory=False,
+    test_loader = data.DataLoader(test_set, num_workers=args.n_workers, pin_memory=False,
         batch_sampler=EpisodicSampler(len(test_set), args.n_class, args.episode_val))
 
     return train_loader, val_loader, test_loader

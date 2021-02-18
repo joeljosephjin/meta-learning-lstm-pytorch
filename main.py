@@ -63,7 +63,7 @@ FLAGS.add_argument('--save', type=str, default='logs',
 # Others
 FLAGS.add_argument('--cpu', action='store_true',
                    help="Set this to use CPU, default use CUDA")
-FLAGS.add_argument('--n-workers', type=int, default=4,
+FLAGS.add_argument('--n-workers', type=int, default=0,
                    help="How many processes for preprocessing")
 FLAGS.add_argument('--pin-mem', type=bool, default=False,
                    help="DataLoader pin_memory")
@@ -71,7 +71,7 @@ FLAGS.add_argument('--log-freq', type=int, default=100,
                    help="Logging frequency")
 FLAGS.add_argument('--val-freq', type=int, default=1000,
                    help="Validation frequency")
-FLAGS.add_argument('--seed', type=int,
+FLAGS.add_argument('--seed', type=int, default=931,
                    help="Random seed")
 
 
@@ -139,6 +139,8 @@ def main():
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
 
     if args.cpu:
         args.dev = torch.device('cpu')
