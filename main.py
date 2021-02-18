@@ -99,13 +99,15 @@ def meta_test(eps, eval_loader, learner_w_grad, learner_wo_grad, metalearner, ar
     return logger.batch_info(eps=eps, totaleps=args.episode_val, phase='evaldone')
 
 
-def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
+def train_learner(learner_w_grad, metalearner, train_input, train_target, args, tasksets):
     cI = metalearner.metalstm.cI.data
     hs = [None]
     for _ in range(args.epoch):
+        # print('len(train_input)',len(train_input)) # 25
         for i in range(0, len(train_input), args.batch_size):
             x = train_input[i:i+args.batch_size]
             y = train_target[i:i+args.batch_size]
+            # print("x.shape",x.shape) # [25, 3, 84, 84]
 
             # get the loss/grad
             learner_w_grad.copy_flat_params(cI)
@@ -127,6 +129,9 @@ def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
 
     return cI
 
+
+def process_batch(batch):
+    return 1, 2, 3, 4
 
 def main():
 
@@ -158,13 +163,13 @@ def main():
     train_loader, val_loader, test_loader = prepare_data(args)
 
     # Load train/validation/test tasksets using the benchmark interface
-    # tasksets = l2l.vision.benchmarks.get_tasksets('mini-imagenet',
-    #                                               train_ways=args.n_class,
-    #                                               train_samples=2*args.n_shot,
-    #                                               test_ways=args.n_class,
-    #                                               test_samples=2*args.n_shot,
-    #                                               root='~/data',
-    # )
+    tasksets = l2l.vision.benchmarks.get_tasksets('mini-imagenet',
+                                                  train_ways=args.n_class,
+                                                  train_samples=2*args.n_shot,
+                                                  test_ways=args.n_class,
+                                                  test_samples=2*args.n_shot,
+                                                  root='~/data',
+    )
     
     # Set up learner, meta-learner
     learner_w_grad = Learner(args.image_size, args.bn_eps, args.bn_momentum, args.n_class).to(args.dev)
@@ -186,20 +191,29 @@ def main():
     best_acc = 0.0
     logger.loginfo("Start training")
     # Meta-training
+    # print("train_loader",len(train_loader)) # 50000
     for eps, (episode_x, episode_y) in enumerate(train_loader):
         # episode_x.shape = [n_class, n_shot + n_eval, c, h, w]
         # episode_y.shape = [n_class, n_shot + n_eval] --> NEVER USED
+
+        batch = tasksets.train.sample()
+        adapt_x, adapt_y, eval_x, eval_y = process_batch(batch)
+        
+        # episode_x.shape = [5, 20, 3, 84, 84]
+        # train_input.shape = [25, 3, 84, 84]
         train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
         train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
         test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
         test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
+        # print("episode_x.shape", episode_x.shape)
+        # print("train_input.shape", train_input.shape)
 
         # Train learner with metalearner
         learner_w_grad.reset_batch_stats()
         learner_wo_grad.reset_batch_stats()
         learner_w_grad.train()
         learner_wo_grad.train()
-        cI = train_learner(learner_w_grad, metalearner, train_input, train_target, args)
+        cI = train_learner(learner_w_grad, metalearner, train_input, train_target, args, tasksets)
 
         # Train meta-learner with validation loss
         learner_wo_grad.transfer_params(learner_w_grad, cI)
