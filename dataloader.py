@@ -81,6 +81,9 @@ class EpisodicSampler(data.Sampler):
 
 def prepare_data(args):
 
+    def _init_fn(worker_id):
+    np.random.seed(int(args.seed))
+
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     
     train_set = EpisodeDataset(args.data_root, 'train', args.n_shot, args.n_eval,
@@ -110,12 +113,12 @@ def prepare_data(args):
             normalize]))
 
     train_loader = data.DataLoader(train_set, num_workers=args.n_workers, pin_memory=args.pin_mem,
-        batch_sampler=EpisodicSampler(len(train_set), args.n_class, args.episode))
+        batch_sampler=EpisodicSampler(len(train_set), args.n_class, args.episode), worker_init_fn=_init_fn)
 
     val_loader = data.DataLoader(val_set, num_workers=args.n_workers, pin_memory=False,
-        batch_sampler=EpisodicSampler(len(val_set), args.n_class, args.episode_val))
+        batch_sampler=EpisodicSampler(len(val_set), args.n_class, args.episode_val), worker_init_fn=_init_fn)
 
     test_loader = data.DataLoader(test_set, num_workers=args.n_workers, pin_memory=False,
-        batch_sampler=EpisodicSampler(len(test_set), args.n_class, args.episode_val))
+        batch_sampler=EpisodicSampler(len(test_set), args.n_class, args.episode_val), worker_init_fn=_init_fn)
 
     return train_loader, val_loader, test_loader

@@ -63,7 +63,7 @@ FLAGS.add_argument('--save', type=str, default='logs',
 # Others
 FLAGS.add_argument('--cpu', action='store_true',
                    help="Set this to use CPU, default use CUDA")
-FLAGS.add_argument('--n-workers', type=int, default=0,
+FLAGS.add_argument('--n-workers', type=int, default=4,
                    help="How many processes for preprocessing")
 FLAGS.add_argument('--pin-mem', type=bool, default=False,
                    help="DataLoader pin_memory")
