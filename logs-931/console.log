@@ -1,3 +1,4 @@
-Feb-18 07:12:55.864 - Logger created at logs-931/console.log
-Feb-18 07:12:55.864 - Random Seed: 931
-Feb-18 07:12:56.040 - Start training
+Feb-18 07:41:42.622 - Logger created at logs-931/console.log
+Feb-18 07:41:42.622 - Random Seed: 931
+Feb-18 07:41:42.798 - Start training
+Feb-18 07:45:24.002 - [   50/50000] loss: 1.5798 (1.6498), acc: 32.000% (21.595%)

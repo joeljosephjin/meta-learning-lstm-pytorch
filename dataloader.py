@@ -82,7 +82,7 @@ class EpisodicSampler(data.Sampler):
 def prepare_data(args):
 
     def _init_fn(worker_id):
-    np.random.seed(int(args.seed))
+        np.random.seed(int(args.seed))
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     
