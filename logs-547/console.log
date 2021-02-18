@@ -1,0 +1,27 @@
+Feb-18 02:32:01.214 - Logger created at logs-547/console.log
+Feb-18 02:32:01.214 - Random Seed: 547
+Feb-18 02:32:01.219 - Starting new HTTPS connection (1): docs.google.com:443
+Feb-18 02:32:01.445 - https://docs.google.com:443 "GET /uc?export=download&id=1I3itTXpXxGV68olxM5roceUMG8itH9Xj HTTP/1.1" 200 None
+Feb-18 02:32:01.447 - Starting new HTTPS connection (2): docs.google.com:443
+Feb-18 02:32:01.570 - https://docs.google.com:443 "GET /uc?export=download&id=1I3itTXpXxGV68olxM5roceUMG8itH9Xj&confirm=YAKA HTTP/1.1" 302 None
+Feb-18 02:32:01.573 - Starting new HTTPS connection (1): doc-10-b8-docs.googleusercontent.com:443
+Feb-18 02:32:01.610 - https://doc-10-b8-docs.googleusercontent.com:443 "GET /docs/securesc/eulrgqct5ca27c59pa60oind7e8n2osn/mh9lnmqjnuiq7347ak6rdkmfkef88lh6/1613615475000/06348484318005528019/00792337707160756336Z/1I3itTXpXxGV68olxM5roceUMG8itH9Xj?e=download HTTP/1.1" 302 0
+Feb-18 02:32:01.635 - https://docs.google.com:443 "GET /nonceSigner?nonce=465kom6lnpd1u&continue=https://doc-10-b8-docs.googleusercontent.com/docs/securesc/eulrgqct5ca27c59pa60oind7e8n2osn/mh9lnmqjnuiq7347ak6rdkmfkef88lh6/1613615475000/06348484318005528019/00792337707160756336Z/1I3itTXpXxGV68olxM5roceUMG8itH9Xj?e%3Ddownload&hash=c191fqkg4c3mo9a8a79hc7ejpar802ms HTTP/1.1" 302 0
+Feb-18 02:32:01.962 - https://doc-10-b8-docs.googleusercontent.com:443 "GET /docs/securesc/eulrgqct5ca27c59pa60oind7e8n2osn/mh9lnmqjnuiq7347ak6rdkmfkef88lh6/1613615475000/06348484318005528019/00792337707160756336Z/1I3itTXpXxGV68olxM5roceUMG8itH9Xj?e=download&nonce=465kom6lnpd1u&user=00792337707160756336Z&hash=std87d39tc2j280c2v0gih1ttsarok4i HTTP/1.1" 200 None
+Feb-18 02:32:17.032 - Starting new HTTPS connection (1): docs.google.com:443
+Feb-18 02:32:17.155 - https://docs.google.com:443 "GET /uc?export=download&id=1KY5e491bkLFqJDp0-UWou3463Mo8AOco HTTP/1.1" 200 None
+Feb-18 02:32:17.157 - Starting new HTTPS connection (2): docs.google.com:443
+Feb-18 02:32:17.240 - https://docs.google.com:443 "GET /uc?export=download&id=1KY5e491bkLFqJDp0-UWou3463Mo8AOco&confirm=Kfcy HTTP/1.1" 302 None
+Feb-18 02:32:17.243 - Starting new HTTPS connection (1): doc-0g-3o-docs.googleusercontent.com:443
+Feb-18 02:32:17.276 - https://doc-0g-3o-docs.googleusercontent.com:443 "GET /docs/securesc/3oe8dmu2sajn1cuubg2vhr08j50ld1jm/59l4k8ec2u1lc3pskhd3j2t2cpbsbirp/1613615475000/06348484318005528019/16130900571783948081Z/1KY5e491bkLFqJDp0-UWou3463Mo8AOco?e=download HTTP/1.1" 302 0
+Feb-18 02:32:17.294 - https://docs.google.com:443 "GET /nonceSigner?nonce=r4igmu33ukcqg&continue=https://doc-0g-3o-docs.googleusercontent.com/docs/securesc/3oe8dmu2sajn1cuubg2vhr08j50ld1jm/59l4k8ec2u1lc3pskhd3j2t2cpbsbirp/1613615475000/06348484318005528019/16130900571783948081Z/1KY5e491bkLFqJDp0-UWou3463Mo8AOco?e%3Ddownload&hash=bghi5ohhu1dl6bb7lkerts31k47r9p29 HTTP/1.1" 302 0
+Feb-18 02:32:17.655 - https://doc-0g-3o-docs.googleusercontent.com:443 "GET /docs/securesc/3oe8dmu2sajn1cuubg2vhr08j50ld1jm/59l4k8ec2u1lc3pskhd3j2t2cpbsbirp/1613615475000/06348484318005528019/16130900571783948081Z/1KY5e491bkLFqJDp0-UWou3463Mo8AOco?e=download&nonce=r4igmu33ukcqg&user=16130900571783948081Z&hash=5un4bh4k8jpir5cl719nt5slfs38oh9f HTTP/1.1" 200 None
+Feb-18 02:32:25.077 - Starting new HTTPS connection (1): docs.google.com:443
+Feb-18 02:32:25.204 - https://docs.google.com:443 "GET /uc?export=download&id=1wpmY-hmiJUUlRBkO9ZDCXAcIpHEFdOhD HTTP/1.1" 200 None
+Feb-18 02:32:25.206 - Starting new HTTPS connection (2): docs.google.com:443
+Feb-18 02:32:25.312 - https://docs.google.com:443 "GET /uc?export=download&id=1wpmY-hmiJUUlRBkO9ZDCXAcIpHEFdOhD&confirm=zYKV HTTP/1.1" 302 None
+Feb-18 02:32:25.314 - Starting new HTTPS connection (1): doc-10-2g-docs.googleusercontent.com:443
+Feb-18 02:32:25.349 - https://doc-10-2g-docs.googleusercontent.com:443 "GET /docs/securesc/bfgi81uv0a2lu2f65h0tjbu1tav4r37q/j4657admpuv4finm1iphhg859312f0j6/1613615475000/06348484318005528019/04341051657121187823Z/1wpmY-hmiJUUlRBkO9ZDCXAcIpHEFdOhD?e=download HTTP/1.1" 302 0
+Feb-18 02:32:25.363 - https://docs.google.com:443 "GET /nonceSigner?nonce=jscfugkqcq204&continue=https://doc-10-2g-docs.googleusercontent.com/docs/securesc/bfgi81uv0a2lu2f65h0tjbu1tav4r37q/j4657admpuv4finm1iphhg859312f0j6/1613615475000/06348484318005528019/04341051657121187823Z/1wpmY-hmiJUUlRBkO9ZDCXAcIpHEFdOhD?e%3Ddownload&hash=urlrqgd3eskjftb5emv44nmo0nh1q3av HTTP/1.1" 302 0
+Feb-18 02:32:25.549 - https://doc-10-2g-docs.googleusercontent.com:443 "GET /docs/securesc/bfgi81uv0a2lu2f65h0tjbu1tav4r37q/j4657admpuv4finm1iphhg859312f0j6/1613615475000/06348484318005528019/04341051657121187823Z/1wpmY-hmiJUUlRBkO9ZDCXAcIpHEFdOhD?e=download&nonce=jscfugkqcq204&user=04341051657121187823Z&hash=kvnbckps6ckc8q9mq90i07aef15db0ff HTTP/1.1" 200 None
+Feb-18 02:32:29.440 - Start training
