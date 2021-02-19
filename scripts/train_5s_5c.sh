@@ -23,4 +23,4 @@ python main.py --mode train \
                --pin-mem True \
                --log-freq 50 \
                --val-freq 1000 \
-               --cpu
+#                --cpu

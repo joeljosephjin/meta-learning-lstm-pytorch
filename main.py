@@ -75,24 +75,27 @@ FLAGS.add_argument('--seed', type=int, default=931,
                    help="Random seed")
 
 
-def meta_test(eps, eval_loader, learner_w_grad, learner_wo_grad, metalearner, args, logger):
-    for subeps, (episode_x, episode_y) in enumerate(tqdm(eval_loader, ascii=True)):
-        train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
-        train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
-        test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
-        test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
-
+def meta_test(eps, tasksets, learner_w_grad, learner_wo_grad, metalearner, args, logger):
+    for subeps in range(100):
+        eval_batch = tasksets.test.sample()
+#         train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
+#         train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
+#         test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
+#         test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
+        
+        adapt_x, adapt_y, eval_x, eval_y = process_batch(eval_batch, args)
+        
         # Train learner with metalearner
         learner_w_grad.reset_batch_stats()
         learner_wo_grad.reset_batch_stats()
         learner_w_grad.train()
         learner_wo_grad.eval()
-        cI = train_learner(learner_w_grad, metalearner, train_input, train_target, args)
+        cI = train_learner(learner_w_grad, metalearner, adapt_x, adapt_y, args)
 
         learner_wo_grad.transfer_params(learner_w_grad, cI)
-        output = learner_wo_grad(test_input)
-        loss = learner_wo_grad.criterion(output, test_target)
-        acc = accuracy(output, test_target)
+        output = learner_wo_grad(eval_x)
+        loss = learner_wo_grad.criterion(output, eval_y)
+        acc = accuracy(output, eval_y)
  
         logger.batch_info(loss=loss.item(), acc=acc, phase='eval')
 
@@ -242,7 +245,7 @@ def main():
         # Meta-validation
         if eps % args.val_freq == 0 and eps != 0:
             save_ckpt(eps, metalearner, optim, args.save)
-            acc = meta_test(eps, val_loader, learner_w_grad, learner_wo_grad, metalearner, args, logger)
+            acc = meta_test(eps, tasksets, learner_w_grad, learner_wo_grad, metalearner, args, logger)
             if acc > best_acc:
                 best_acc = acc
                 logger.loginfo("* Best accuracy so far *\n")
