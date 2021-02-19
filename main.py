@@ -99,7 +99,7 @@ def meta_test(eps, eval_loader, learner_w_grad, learner_wo_grad, metalearner, ar
     return logger.batch_info(eps=eps, totaleps=args.episode_val, phase='evaldone')
 
 
-def train_learner(learner_w_grad, metalearner, train_input, train_target, args, tasksets):
+def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
     cI = metalearner.metalstm.cI.data
     hs = [None]
     for _ in range(args.epoch):
@@ -130,8 +130,18 @@ def train_learner(learner_w_grad, metalearner, train_input, train_target, args, 
     return cI
 
 
-def process_batch(batch):
-    return 1, 2, 3, 4
+def process_batch(batch, args):
+    data, labels = batch
+    data, labels = data.to(args.dev), labels.to(args.dev)
+
+    # Separate data into adaptation/evalutation sets
+    adaptation_indices = np.zeros(data.size(0), dtype=bool)
+    adaptation_indices[np.arange(args.n_shot*args.n_class) * 2] = True
+    evaluation_indices = torch.from_numpy(~adaptation_indices)
+    adaptation_indices = torch.from_numpy(adaptation_indices)
+    adaptation_data, adaptation_labels = data[adaptation_indices], labels[adaptation_indices]
+    evaluation_data, evaluation_labels = data[evaluation_indices], labels[evaluation_indices]
+    return adaptation_data, adaptation_labels, evaluation_data, evaluation_labels
 
 def main():
 
@@ -160,7 +170,7 @@ def main():
     logger = GOATLogger(args)
 
     # Get data
-    train_loader, val_loader, test_loader = prepare_data(args)
+    # train_loader, val_loader, test_loader = prepare_data(args)
 
     # Load train/validation/test tasksets using the benchmark interface
     tasksets = l2l.vision.benchmarks.get_tasksets('mini-imagenet',
@@ -192,19 +202,20 @@ def main():
     logger.loginfo("Start training")
     # Meta-training
     # print("train_loader",len(train_loader)) # 50000
-    for eps, (episode_x, episode_y) in enumerate(train_loader):
+    # for eps, (episode_x, episode_y) in enumerate(train_loader):
+    for eps in range(50000):
         # episode_x.shape = [n_class, n_shot + n_eval, c, h, w]
         # episode_y.shape = [n_class, n_shot + n_eval] --> NEVER USED
 
         batch = tasksets.train.sample()
-        adapt_x, adapt_y, eval_x, eval_y = process_batch(batch)
+        adapt_x, adapt_y, eval_x, eval_y = process_batch(batch, args)
         
         # episode_x.shape = [5, 20, 3, 84, 84]
         # train_input.shape = [25, 3, 84, 84]
-        train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
-        train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
-        test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
-        test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
+        # train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
+        # train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
+        # test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
+        # test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
         # print("episode_x.shape", episode_x.shape)
         # print("train_input.shape", train_input.shape)
 
@@ -213,13 +224,13 @@ def main():
         learner_wo_grad.reset_batch_stats()
         learner_w_grad.train()
         learner_wo_grad.train()
-        cI = train_learner(learner_w_grad, metalearner, train_input, train_target, args, tasksets)
+        cI = train_learner(learner_w_grad, metalearner, adapt_x, adapt_y, args) # modified
 
         # Train meta-learner with validation loss
         learner_wo_grad.transfer_params(learner_w_grad, cI)
-        output = learner_wo_grad(test_input)
-        loss = learner_wo_grad.criterion(output, test_target)
-        acc = accuracy(output, test_target)
+        output = learner_wo_grad(eval_x)
+        loss = learner_wo_grad.criterion(output, eval_y)
+        acc = accuracy(output, eval_y)
         
         optim.zero_grad()
         loss.backward()
