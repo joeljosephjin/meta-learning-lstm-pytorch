@@ -18,6 +18,8 @@ from utils import *
 
 import learn2learn as l2l
 
+import wandb
+
 
 FLAGS = argparse.ArgumentParser()
 FLAGS.add_argument('--mode', choices=['train', 'test'])
@@ -75,14 +77,8 @@ FLAGS.add_argument('--seed', type=int, default=931,
                    help="Random seed")
 
 
-def meta_test(eps, tasksets, learner_w_grad, learner_wo_grad, metalearner, args, logger):
-    for subeps in range(100):
-        eval_batch = tasksets.test.sample()
-#         train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
-#         train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
-#         test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
-#         test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
-        
+def meta_test(eps, eval_batch, learner_w_grad, learner_wo_grad, metalearner, args, logger):
+    for subeps in range(len(eval_batch)):      
         adapt_x, adapt_y, eval_x, eval_y = process_batch(eval_batch, args)
         
         # Train learner with metalearner
@@ -148,6 +144,8 @@ def process_batch(batch, args):
 
 def main():
 
+    wandb.init(project="ofsl-implementation", entity="joeljosephjin")
+    
     args, unparsed = FLAGS.parse_known_args()
     if len(unparsed) != 0:
         raise NameError("Argument {} not recognized".format(unparsed))
@@ -171,9 +169,6 @@ def main():
         args.dev = torch.device('cuda')
 
     logger = GOATLogger(args)
-
-    # Get data
-    # train_loader, val_loader, test_loader = prepare_data(args)
 
     # Load train/validation/test tasksets using the benchmark interface
     tasksets = l2l.vision.benchmarks.get_tasksets('mini-imagenet',
@@ -203,31 +198,47 @@ def main():
 
     best_acc = 0.0
     logger.loginfo("Start training")
+    
     # Meta-training
-    # print("train_loader",len(train_loader)) # 50000
-    # for eps, (episode_x, episode_y) in enumerate(train_loader):
     for eps in range(50000):
         # episode_x.shape = [n_class, n_shot + n_eval, c, h, w]
         # episode_y.shape = [n_class, n_shot + n_eval] --> NEVER USED
 
         batch = tasksets.train.sample()
         adapt_x, adapt_y, eval_x, eval_y = process_batch(batch, args)
-        
-        # episode_x.shape = [5, 20, 3, 84, 84]
-        # train_input.shape = [25, 3, 84, 84]
-        # train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
-        # train_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_shot)).to(args.dev) # [n_class * n_shot]
-        # test_input = episode_x[:, args.n_shot:].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_eval, :]
-        # test_target = torch.LongTensor(np.repeat(range(args.n_class), args.n_eval)).to(args.dev) # [n_class * n_eval]
-        # print("episode_x.shape", episode_x.shape)
-        # print("train_input.shape", train_input.shape)
 
         # Train learner with metalearner
         learner_w_grad.reset_batch_stats()
         learner_wo_grad.reset_batch_stats()
         learner_w_grad.train()
         learner_wo_grad.train()
-        cI = train_learner(learner_w_grad, metalearner, adapt_x, adapt_y, args) # modified
+#         cI = train_learner(learner_w_grad, metalearner, adapt_x, adapt_y, args) # modified
+        
+        cI = metalearner.metalstm.cI.data
+        hs = [None]
+        for _ in range(args.epoch):
+            # print('len(adapt_x)',len(adapt_x)) # 25
+            for i in range(0, len(adapt_x), args.batch_size):
+                x = adapt_x[i:i+args.batch_size]
+                y = adapt_y[i:i+args.batch_size]
+                # print("x.shape",x.shape) # [25, 3, 84, 84]
+
+                # get the loss/grad
+                learner_w_grad.copy_flat_params(cI)
+                output = learner_w_grad(x)
+                loss = learner_w_grad.criterion(output, y)
+                acc = accuracy(output, y)
+                learner_w_grad.zero_grad()
+                loss.backward()
+                grad = torch.cat([p.grad.data.view(-1) / args.batch_size for p in learner_w_grad.parameters()], 0)
+
+                # preprocess grad & loss and metalearner forward
+                grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
+                loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
+                metalearner_input = [loss_prep, grad_prep, grad.unsqueeze(1)]
+                cI, h = metalearner(metalearner_input, hs[-1])
+                hs.append(h)
+
 
         # Train meta-learner with validation loss
         learner_wo_grad.transfer_params(learner_w_grad, cI)
@@ -241,11 +252,14 @@ def main():
         optim.step()
 
         logger.batch_info(eps=eps, totaleps=args.episode, loss=loss.item(), acc=acc, phase='train')
+        wandb.log({'loss':loss.item(), 'accuracy':acc}, step=eps)
 
         # Meta-validation
         if eps % args.val_freq == 0 and eps != 0:
             save_ckpt(eps, metalearner, optim, args.save)
-            acc = meta_test(eps, tasksets, learner_w_grad, learner_wo_grad, metalearner, args, logger)
+            val_batch = tasksets.train.sample()
+            acc, test_loss = meta_test(eps, val_batch, learner_w_grad, learner_wo_grad, metalearner, args, logger)
+            wandb.log({'test_loss':test_loss.item(), 'test_accuracy':acc}, step=eps)
             if acc > best_acc:
                 best_acc = acc
                 logger.loginfo("* Best accuracy so far *\n")
