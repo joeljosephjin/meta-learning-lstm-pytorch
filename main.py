@@ -206,38 +206,32 @@ def main():
 
         batch = tasksets.train.sample()
         adapt_x, adapt_y, eval_x, eval_y = process_batch(batch, args)
+        # print('len(adapt_x)',len(adapt_x)) # 25
 
         # Train learner with metalearner
         learner_w_grad.reset_batch_stats()
         learner_wo_grad.reset_batch_stats()
         learner_w_grad.train()
         learner_wo_grad.train()
-#         cI = train_learner(learner_w_grad, metalearner, adapt_x, adapt_y, args) # modified
         
         cI = metalearner.metalstm.cI.data
         hs = [None]
         for _ in range(args.epoch):
-            # print('len(adapt_x)',len(adapt_x)) # 25
-            for i in range(0, len(adapt_x), args.batch_size):
-                x = adapt_x[i:i+args.batch_size]
-                y = adapt_y[i:i+args.batch_size]
-                # print("x.shape",x.shape) # [25, 3, 84, 84]
+            # get the loss/grad
+            learner_w_grad.copy_flat_params(cI)
+            output = learner_w_grad(adapt_x)
+            loss = learner_w_grad.criterion(output, adapt_y)
+            acc = accuracy(output, adapt_y)
+            learner_w_grad.zero_grad()
+            loss.backward()
+            grad = torch.cat([p.grad.data.view(-1) / args.batch_size for p in learner_w_grad.parameters()], 0)
 
-                # get the loss/grad
-                learner_w_grad.copy_flat_params(cI)
-                output = learner_w_grad(x)
-                loss = learner_w_grad.criterion(output, y)
-                acc = accuracy(output, y)
-                learner_w_grad.zero_grad()
-                loss.backward()
-                grad = torch.cat([p.grad.data.view(-1) / args.batch_size for p in learner_w_grad.parameters()], 0)
-
-                # preprocess grad & loss and metalearner forward
-                grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
-                loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
-                metalearner_input = [loss_prep, grad_prep, grad.unsqueeze(1)]
-                cI, h = metalearner(metalearner_input, hs[-1])
-                hs.append(h)
+            # preprocess grad & loss and metalearner forward
+            grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
+            loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
+            metalearner_input = [loss_prep, grad_prep, grad.unsqueeze(1)]
+            cI, h = metalearner(metalearner_input, hs[-1])
+            hs.append(h)
 
 
         # Train meta-learner with validation loss
