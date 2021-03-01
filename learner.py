@@ -35,6 +35,7 @@ class Learner(nn.Module):
         })
 
         clr_in = image_size // 2**4
+        # ??
         self.model.update({'cls': nn.Linear(32 * clr_in * clr_in, n_classes)})
         self.criterion = nn.CrossEntropyLoss()
 
@@ -59,19 +60,27 @@ class Learner(nn.Module):
             p.data.copy_(cI[idx: idx+plen].view_as(p))
             idx += plen
 
+    # same as copy_flat_params; only diff = parameters of the model are not nn.Params anymore, they're just plain tensors now.
     def transfer_params(self, learner_w_grad, cI):
         # Use load_state_dict only to copy the running mean/var in batchnorm, the values of the parameters
         #  are going to be replaced by cI
         self.load_state_dict(learner_w_grad.state_dict())
         #  replace nn.Parameters with tensors from cI (NOT nn.Parameters anymore).
         idx = 0
+        # model.modules ??
         for m in self.model.modules():
+            # if the layers are our guys
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.Linear):
+                # get size integers of the parameter vectors
                 wlen = m._parameters['weight'].view(-1).size(0)
+                # reshape the flat params from cell state to p-shape, then clone it to send it to module._params
                 m._parameters['weight'] = cI[idx: idx+wlen].view_as(m._parameters['weight']).clone()
                 idx += wlen
+                # bias seems to have a seperate assignment strategy
                 if m._parameters['bias'] is not None:
+                    # get the length of the bias vector
                     blen = m._parameters['bias'].view(-1).size(0)
+                    # same as is done with the weights
                     m._parameters['bias'] = cI[idx: idx+blen].view_as(m._parameters['bias']).clone()
                     idx += blen
 

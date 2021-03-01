@@ -221,38 +221,44 @@ def main():
             # get the loss/grad
             # copy from cell state to model.parameters
             learner_w_grad.copy_flat_params(cI)
-            # do a forward pass
+
+            # do a forward pass and get the loss
             output = learner_w_grad(adapt_x)
-            # get the loss
             loss = learner_w_grad.criterion(output, adapt_y)
-            # get the accuracy
             acc = accuracy(output, adapt_y)
-            # put grads to zero
-            learner_w_grad.zero_grad()
+
             # populate the gradients
+            learner_w_grad.zero_grad()
             loss.backward()
+
             # get the grad from the lwg.parameters
             grad = torch.cat([p.grad.data.view(-1) / args.batch_size for p in learner_w_grad.parameters()], 0)
 
             # preprocess grad & loss and metalearner forward
             grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
             loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
+
             # push the loss, grad thru the metalearner
             cI, h = metalearner([loss_prep, grad_prep, grad.unsqueeze(1)], hs[-1])
             hs.append(h)
 
 
         # Train meta-learner with validation loss
+        # same as copy_flat_params; only diff = parameters of the model are not nn.Params anymore, they're just plain tensors now.
         learner_wo_grad.transfer_params(learner_w_grad, cI)
+
+        # do a forward pass and get the loss
         output = learner_wo_grad(eval_x)
         loss = learner_wo_grad.criterion(output, eval_y)
         acc = accuracy(output, eval_y)
         
+        # update the metalearner aka the metalstm
         optim.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(metalearner.parameters(), args.grad_clip)
         optim.step()
 
+        # loggers
         logger.batch_info(eps=eps, totaleps=args.episode, loss=loss.item(), acc=acc, phase='train')
         wandb.log({'loss':loss.item(), 'accuracy':acc}, step=eps)
 

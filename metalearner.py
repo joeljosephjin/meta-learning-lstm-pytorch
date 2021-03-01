@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 
-# looks like just the lstm in isolated way.
+# The lstm with parameters not as modules but as individual parameters and so on..
 class MetaLSTMCell(nn.Module):
     """C_t = f_t * C_{t-1} + i_t * \tilde{C_t}"""
     def __init__(self, input_size, hidden_size, n_learner_params):
@@ -40,6 +40,7 @@ class MetaLSTMCell(nn.Module):
     def init_cI(self, flat_params):
         self.cI.data.copy_(flat_params.unsqueeze(1))
 
+    # nothing a lot special really; except the primitiv-ish operations on weights and biases
     def forward(self, inputs, hx=None):
         """Args:
             inputs = [x_all, grad]:
@@ -75,6 +76,7 @@ class MetaLSTMCell(nn.Module):
         return s.format(**self.__dict__)
 
 
+# nothing special really; typical initn and typical forward
 class MetaLearner(nn.Module):
 
     def __init__(self, input_size, hidden_size, n_learner_params):
@@ -99,7 +101,9 @@ class MetaLearner(nn.Module):
             hs = [(lstm_hn, lstm_cn), [metalstm_fn, metalstm_in, metalstm_cn]]
         """
         loss, grad_prep, grad = inputs
+        # broadcast loss into the bigger x-times sized grad_prep
         loss = loss.expand_as(grad_prep)
+        # put only the loss and grad_prep back into the inputs tensor-list
         inputs = torch.cat((loss, grad_prep), 1)   # [n_learner_params, 4]
 
         if hs is None:
