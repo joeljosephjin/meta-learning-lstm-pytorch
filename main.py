@@ -183,6 +183,7 @@ def main():
     learner_w_grad = Learner(args.image_size, args.bn_eps, args.bn_momentum, args.n_class).to(args.dev)
     learner_wo_grad = copy.deepcopy(learner_w_grad)
     metalearner = MetaLearner(args.input_size, args.hidden_size, learner_w_grad.get_flat_params().size(0)).to(args.dev)
+    # gets the model parameters in a concatenated torch list; then pushes it into cI.data
     metalearner.metalstm.init_cI(learner_w_grad.get_flat_params())
 
     # Set up loss, optimizer, learning rate scheduler
@@ -218,19 +219,26 @@ def main():
         hs = [None]
         for _ in range(args.epoch):
             # get the loss/grad
+            # copy from cell state to model.parameters
             learner_w_grad.copy_flat_params(cI)
+            # do a forward pass
             output = learner_w_grad(adapt_x)
+            # get the loss
             loss = learner_w_grad.criterion(output, adapt_y)
+            # get the accuracy
             acc = accuracy(output, adapt_y)
+            # put grads to zero
             learner_w_grad.zero_grad()
+            # populate the gradients
             loss.backward()
+            # get the grad from the lwg.parameters
             grad = torch.cat([p.grad.data.view(-1) / args.batch_size for p in learner_w_grad.parameters()], 0)
 
             # preprocess grad & loss and metalearner forward
             grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
             loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
-            metalearner_input = [loss_prep, grad_prep, grad.unsqueeze(1)]
-            cI, h = metalearner(metalearner_input, hs[-1])
+            # push the loss, grad thru the metalearner
+            cI, h = metalearner([loss_prep, grad_prep, grad.unsqueeze(1)], hs[-1])
             hs.append(h)
 
 

@@ -44,13 +44,18 @@ class Learner(nn.Module):
         outputs = self.model.cls(x)
         return outputs
 
+    # gets the model parameters in a concatenated torch list
     def get_flat_params(self):
         return torch.cat([p.view(-1) for p in self.model.parameters()], 0)
 
+    # copy from cell state to model.parameters
     def copy_flat_params(self, cI):
         idx = 0
+        # for each parameter in the model
         for p in self.model.parameters():
+            # get the number-length
             plen = p.view(-1).size(0)
+            # convert the flat parameters from the cell state to p-shape and then copy the values into the parameter
             p.data.copy_(cI[idx: idx+plen].view_as(p))
             idx += plen
 

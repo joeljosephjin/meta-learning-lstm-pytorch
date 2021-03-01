@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 
 
+# looks like just the lstm in isolated way.
 class MetaLSTMCell(nn.Module):
     """C_t = f_t * C_{t-1} + i_t * \tilde{C_t}"""
     def __init__(self, input_size, hidden_size, n_learner_params):
@@ -35,6 +36,7 @@ class MetaLSTMCell(nn.Module):
         nn.init.uniform_(self.bF, 4, 6)
         nn.init.uniform_(self.bI, -5, -4)
 
+    # pushes the parameters into "cI.data"
     def init_cI(self, flat_params):
         self.cI.data.copy_(flat_params.unsqueeze(1))
 
@@ -82,7 +84,9 @@ class MetaLearner(nn.Module):
             hidden_size (int): for the first LSTM layer, default = 20
             n_learner_params (int): number of learner's parameters
         """
+        # lstm from the torch library
         self.lstm = nn.LSTMCell(input_size=input_size, hidden_size=hidden_size)
+        # lstm custom created in the class
         self.metalstm = MetaLSTMCell(input_size=hidden_size, hidden_size=1, n_learner_params=n_learner_params)
 
     def forward(self, inputs, hs=None):
@@ -101,7 +105,9 @@ class MetaLearner(nn.Module):
         if hs is None:
             hs = [None, None]
 
+        # the inputs{loss and grad_prep} are first passed thru the torch's lstm
         lstmhx, lstmcx = self.lstm(inputs, hs[0])
+        # its output then, along with the grads is passed to the custom lstm
         flat_learner_unsqzd, metalstm_hs = self.metalstm([lstmhx, grad], hs[1])
 
         return flat_learner_unsqzd.squeeze(), [(lstmhx, lstmcx), metalstm_hs]
