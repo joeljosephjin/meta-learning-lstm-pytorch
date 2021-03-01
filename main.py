@@ -100,7 +100,7 @@ def meta_test(eps, eval_batch, learner_w_grad, learner_wo_grad, metalearner, arg
 
 def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
     cI = metalearner.metalstm.cI.data
-    hs = [None]
+    h = None
     for _ in range(args.epoch):
         # print('len(train_input)',len(train_input)) # 25
         for i in range(0, len(train_input), args.batch_size):
@@ -121,8 +121,7 @@ def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
             grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
             loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
             metalearner_input = [loss_prep, grad_prep, grad.unsqueeze(1)]
-            cI, h = metalearner(metalearner_input, hs[-1])
-            hs.append(h)
+            cI, h = metalearner(metalearner_input, h)
 
             #print("training loss: {:8.6f} acc: {:6.3f}, mean grad: {:8.6f}".format(loss, acc, torch.mean(grad)))
 
@@ -216,7 +215,7 @@ def main():
         learner_wo_grad.train()
         
         cI = metalearner.metalstm.cI.data
-        hs = [None]
+        h = None
         for _ in range(args.epoch):
             # get the loss/grad
             # copy from cell state to model.parameters
@@ -239,8 +238,7 @@ def main():
             loss_prep = preprocess_grad_loss(loss.data.unsqueeze(0)) # [1, 2]
 
             # push the loss, grad thru the metalearner
-            cI, h = metalearner([loss_prep, grad_prep, grad.unsqueeze(1)], hs[-1])
-            hs.append(h)
+            cI, h = metalearner([loss_prep, grad_prep, grad.unsqueeze(1)], h)
 
 
         # Train meta-learner with validation loss

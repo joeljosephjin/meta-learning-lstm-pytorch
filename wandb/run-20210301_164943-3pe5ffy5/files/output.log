@@ -1,0 +1,17 @@
+Logger created at logs-931/console.log
+Random Seed: 931
+tcmalloc: large alloc 1145348096 bytes == 0x55acdd89c000 @  0x7f5993b381e7 0x55acd8bb8f48 0x55acd8b839c7 0x55acd8c653fe 0x55acd8c9c7a2 0x55acd8b87f6e 0x55acd8b87e99 0x55acd8c4084d 0x55acd8c3ffd6 0x55acd8c3ca4b 0x55acd8b297f0 0x55acd8b8700c 0x55acd8b86de0 0x55acd8bfb244 0x55acd8bf5e0d 0x55acd8b8902c 0x55acd8bc9d39 0x55acd8bc6c84 0x55acd8b878e9 0x55acd8bfbade 0x55acd8bf5b0e 0x55acd8ac7e2b 0x55acd8bf81e6 0x55acd8bf5b0e 0x55acd8b8877a 0x55acd8bf786a 0x55acd8bf5e0d 0x55acd8b8877a 0x55acd8bf6a45 0x55acd8bf5b0e 0x55acd8bf5813
+tcmalloc: large alloc 3251404800 bytes == 0x55adaa59e000 @  0x7f5993b1ab6b 0x7f5993b3a379 0x7f59447f974e 0x7f59447fb7b6 0x7f597f265e43 0x7f597ec507ff 0x7f597ef67bdc 0x7f597ef1324b 0x7f597ef32065 0x7f597ef0da7b 0x7f597ef1324b 0x7f597ef32065 0x7f597effc1ee 0x7f598050ed9e 0x7f597ef1324b 0x7f597ef32065 0x7f597ef0da7b 0x7f597ef1324b 0x7f597ef32065 0x7f597effc1ee 0x7f597ec3c730 0x7f597f16971a 0x7f597e7bb081 0x7f597f255d66 0x7f597f239900 0x7f598eba343d 0x7f598ecae0e3 0x7f598ecb9fd0 0x55acd8b87050 0x55acd8c7899d 0x55acd8bfafe9
+Start training
+[   50/50000] loss: 1.6294 (1.6431), acc: 20.000% (22.353%)
+[  100/50000] loss: 1.5784 (1.6159), acc: 24.000% (23.842%)
+Traceback (most recent call last):
+  File "main.py", line 280, in <module>
+    main()
+  File "main.py", line 258, in main
+    loss.backward()
+  File "/usr/local/lib/python3.7/dist-packages/torch/tensor.py", line 221, in backward
+    torch.autograd.backward(self, gradient, retain_graph, create_graph)
+  File "/usr/local/lib/python3.7/dist-packages/torch/autograd/__init__.py", line 132, in backward
+    allow_unreachable=True)  # allow_unreachable flag
+KeyboardInterrupt
